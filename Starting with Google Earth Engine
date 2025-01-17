@@ -1,0 +1,51 @@
+//First I started with creating geometry point of Indiana. The point figure below I dragged from Insector section. 
+var pt_Indiana = /* color: #d63000 */ee.Geometry.Point([-86.168, 39.835]);
+
+// Now I'll load some Landsat imagery, and filter it to include only those images/scenes which include this point
+// I'll also filter the ImageCollection to include only Images in 2023. Then, I'll sort the ImageCollection by
+// the CLOUD_COVER property so that the least cloudy images are first, and finally take just the first Image in
+// the ImageCollection. I'll store this is as a new variable called "im_Indiana"
+
+
+// I prefer to use the Landsat 8 archive, specifically the Level 1 TOA, or "top of atmosphere" data
+var im_Indiana = ee.ImageCollection("LANDSAT/LC08/C02/T1_TOA")
+  .filterDate('2023-01-01', '2023-12-31')
+  .filterBounds(pt_Indiana)
+  .sort('CLOUD_COVER')
+  .first();
+
+// Now, I want to know the attributes of the image.
+print(im_Indiana)
+
+// now I want to display these attributes into the map. 
+Map.addLayer(im_Indiana)
+
+
+
+//First I want to try Red, Green and Blue, most commonly used band combination to see some map features instead of using the default. 
+var viz_params = {
+  bands: ['B4', 'B3', 'B2'],
+  min: 0,
+  max: 0.35
+};
+
+// We'll also go ahead and center the map over our point and set a zoom level
+Map.centerObject(pt_Indiana, 13); //Tried different zoom level. 
+
+// and now we'll again display the image, but using these new parameters. We'll also provide a descriptive name
+
+Map.addLayer(im_Indiana, viz_params, 'RGB Landsat image');
+
+// Using combination of bands [B5, B4, B3] without changing other variables. 
+var viz_param = {
+  bands: ['B5','B4','B3'],
+  min: 0,
+  max: 0.40
+};
+
+Map.addLayer(im_Indiana, viz_param, 'False color Landsat Image')
+
+//Now I want to compute the Normalized Difference Vegetation Index (NDVI) using the red (B4) and near-infrared (B5) bands
+
+var ndvi = im_Indiana.normalizedDifference(['B5', 'B4']).rename('NDVI');
+Map.addLayer(ndvi,{min: -1, max: 1, palette: ['blue', 'white', 'green']}, 'NDVI');
